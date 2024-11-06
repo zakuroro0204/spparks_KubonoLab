@@ -1,49 +1,83 @@
-#!/usr/local/bin/python3 -i
-# preceeding line should have path for Python on your machine
+#!/usr/local/bin/python3
 
-# demo.py
-# Purpose: illustrate use of many library interface commands
-# Syntax:  demo.py
-#          uses in.ising as SPPARKS input script
+# copy SPPARKS src/libspparks.so and spparks.py to system dirs
+
+instructions = """
+Syntax: python install.py [-h] [libdir] [pydir]
+        libdir = target dir for src/libspparks.so, default = /usr/local/lib
+        pydir = target dir for spparks.py, default = Python site-packages dir
+"""
 
 import sys
+import os
+import subprocess  # Python3では commands モジュールの代わりに subprocess を使用
 
-# parse command line
-
-argv = sys.argv
-if len(argv) != 1:
-    print("Syntax: demo.py")
+if (len(sys.argv) > 1 and sys.argv[1] == "-h") or len(sys.argv) > 3:
+    print(instructions)
     sys.exit()
 
-me = 0
-# uncomment if running in parallel via Pypar
-#import pypar
-#me = pypar.rank()
-#nprocs = pypar.size()
+if len(sys.argv) >= 2:
+    libdir = sys.argv[1]
+else:
+    libdir = "/usr/local/lib"
 
-from spparks import spparks
-spk = spparks()
+if len(sys.argv) == 3:
+    pydir = sys.argv[2]
+else:
+    pydir = ""
 
-# test out various library functions after running in.demo
+# copy C lib to libdir if it exists
+# warn if not in LD_LIBRARY_PATH or LD_LIBRARY_PATH is undefined
 
-spk.file("in.ising")
+if not os.path.isdir(libdir):
+    print(f"ERROR: libdir {libdir} does not exist")
+    sys.exit()
+    
+if "LD_LIBRARY_PATH" not in os.environ:
+    print(f"WARNING: LD_LIBRARY_PATH undefined, cannot check libdir {libdir}")
+else:
+    libpaths = os.environ['LD_LIBRARY_PATH'].split(':')
+    if libdir not in libpaths:
+        print(f"WARNING: libdir {libdir} not in LD_LIBRARY_PATH")
 
-if me == 0:
-    print("\nPython output:")
+cmd = f"cp ../src/libspparks.so {libdir}"
+print(cmd)
+try:
+    output = subprocess.check_output(cmd, shell=True, universal_newlines=True, stderr=subprocess.STDOUT)
+    if output.strip():
+        print(output)
+except subprocess.CalledProcessError as e:
+    if e.output.strip():
+        print(e.output)
 
-nglobal = spk.extract("nglobal", 0)
-nlocal = spk.extract("nlocal", 0)
-print("Nglobal, nlocal =", nglobal, nlocal)
+# copy spparks.py to pydir if it exists
+# if pydir not specified, install in site-packages via distutils setup()
 
-xyz = spk.extract("xyz", 5)
-print("Y coord of 100th lattice site =", xyz[99][1])
+if pydir:
+    if not os.path.isdir(pydir):
+        print(f"ERROR: pydir {pydir} does not exist")
+        sys.exit()
+    cmd = f"cp ../python/spparks.py {pydir}"
+    print(cmd)
+    try:
+        output = subprocess.check_output(cmd, shell=True, universal_newlines=True, stderr=subprocess.STDOUT)
+        if output.strip():
+            print(output)
+    except subprocess.CalledProcessError as e:
+        if e.output.strip():
+            print(e.output)
+    sys.exit()
+    
+print("installing spparks.py in Python site-packages dir")
 
-eng = spk.energy()
-print("Energy of system =", eng)
+os.chdir('../python')                # in case invoked via make in src dir
 
-site = spk.extract("site", 1)
-print("Site values for 1,10,100 =", site[0], site[9], site[99])
-
-# uncomment if running in parallel via Pypar
-#print("Proc %d out of %d procs has" % (me,nprocs), spk)
-#pypar.finalize()
+from distutils.core import setup
+sys.argv = ["setup.py","install"]    # as if had run "python setup.py install"
+setup(name = "spparks",
+      version = "6Mar13",
+      author = "Steve Plimpton",
+      author_email = "sjplimp@sandia.gov",
+      url = "http://spparks.sandia.gov",
+      description = "SPPARKS kinetic Monte Carlo library",
+      py_modules = ["spparks"])
