@@ -1,0 +1,19 @@
+# Compiled files
+spk_*
+*.o
+*.a
+*.so
+Obj_*
+
+# STUBS build files
+STUBS/*.o
+STUBS/libmpi.a
+
+# Runtime files
+log.spparks
+*.dump
+dump.*
+cluster.dat
+
+# Generated directories
+src/Obj_*
