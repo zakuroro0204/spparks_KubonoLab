@@ -1,0 +1,54 @@
+# Diffusion simulation on 2D square lattice
+# Parameters:
+# Temperature = 297K
+# Ed = 0.74eV
+# Initial density = 30%
+# Prefactor = 0.5
+
+# 次元の設定
+dimension 2          # 2次元の場合
+
+# 境界条件の設定
+boundary p p p       # 周期境界条件の場合
+
+# 格子タイプと格子定数の設定
+lattice sc/4n 1.0   # 2次元の場合：4近傍の単純立方格子
+
+# シミュレーションボックスの作成（100x100）
+# 実際のサイズは 38.4 nm × 38.4 nm
+region box block 0 100 0 100 -0.5 0.5    # 2次元の場合
+create_box box
+
+# 拡散アプリケーションの設定
+app_style diffusion nonlinear hop
+
+# サイトの生成
+create_sites box
+# 初期値の設定（5% の格子点値を割り当て）
+set site value 2 fraction 0.05  # 値2は占有サイト、値1は空サイト
+
+# 拡散の活性化エネルギーの設定
+# Ed/kT = 0.74/(8.617×10^-5 × 297) ≈ 29.0
+barrier hop 29.0
+
+# KMC（Kinetic Monte Carlo）を使用する場合
+solve_style linear
+
+temperature 0.8     # シミュレーション温度の設定
+
+# 統計情報の出力
+# 100/ν = 100 ps 毎に出力
+stats 100.0
+
+# システムの状態の出力設定
+# 1000/ν = 1 ns 毎に出力
+dump 1 text 1000.0 dump.* id site x y z
+
+# 拡散係数計算用の詳細出力
+# 10/ν = 10 ps 毎に出力
+dump 2 text 10.0 dump.msd.* id site x y z
+
+# シミュレーション実行
+# 1000.0/ν = 1 ns の時間発展
+run 1000.0         # 1000.0時間単位分実行
+

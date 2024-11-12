@@ -1,0 +1,6 @@
+# in.spparks
+dimension 3
+boundary p p p
+lattice sc/6n 1.0
+region simbox block 0 100 0 100 0 100
+create_box simbox

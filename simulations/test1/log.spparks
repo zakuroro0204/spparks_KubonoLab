@@ -1,0 +1,6 @@
+SPPARKS (6 Sep 2023)
+# in.spparks
+dimension 3
+boundary p p p
+lattice sc/6n 1.0
+ERROR: Lattice command before app_style set (../input.cpp:738)

@@ -44,6 +44,16 @@ AppLattice::AppLattice(SPPARKS *spk, int narg, char **arg) : App(spk,narg,arg)
   MPI_Comm_rank(world,&me);
   MPI_Comm_size(world,&nprocs);
 
+// 格子構造関連の設定を追加
+  // 遷移確率計算の範囲を設定
+  delpropensity = 1;    // 最近接サイトのみを考慮
+
+// イベントの影響範囲を設定 
+  delevent = 1;         // 最近接サイトのみに影響
+
+  // 例：2次元正方格子の場合は4近傍
+  maxneigh = 4;         // 上下左右の4近傍
+
   // default settings
 
   simple = 0;
@@ -1243,6 +1253,15 @@ void AppLattice::grow(int n)
   memory->grow(xyz,nmax,3,"app:xyz");
   memory->grow(owner,nmax,"app:owner");
   memory->grow(index,nmax,"app:index");
+
+// 新しい配列を追加（例：サイトの温度）
+  double *temperature;
+  memory->grow(temperature,nmax,"app:temperature");
+    
+  // 新しい2次元配列を追加（例：サイト間の相互作用）
+
+  double **interaction;  
+  memory->grow(interaction,nmax,maxneigh,"app:interaction");
 
   memory->grow(numneigh,nmax,"app:numneigh");
   if (maxneigh) memory->grow(neighbor,nmax,maxneigh,"app:neighbor");
